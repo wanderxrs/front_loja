@@ -7,7 +7,7 @@ class ServicoApi {
 
 
   // ================= REGISTRO =================
-  Future<bool> cadastrarUsuario(String nome, String email, String senha) async {
+  Future<bool> cadastrarUsuario(String nome, String email, String senha, String userType) async {
     final response = await http.post(
       Uri.parse("$baseUrl/registro"),
       headers: {
@@ -16,7 +16,8 @@ class ServicoApi {
       body: jsonEncode({
         "nome": nome,
         "email": email,
-        "password": senha
+        "password": senha,
+        "user_type": userType
       }),
     );
 
