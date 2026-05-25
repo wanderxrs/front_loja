@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../services/api_connect.dart'; // ajusta o caminho se precisar
+import '../services/api_connect.dart';
 import 'cadastro_page.dart';
 import 'home_page.dart';
+import 'email_confirmacao.dart'; // 👈 IMPORTANTE
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -34,7 +36,6 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     if (resultado != null) {
-      // SUCESSO 🔥
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login realizado com sucesso!")),
       );
@@ -47,7 +48,6 @@ class _LoginPageState extends State<LoginPage> {
       );
 
     } else {
-      // ERRO ❌
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Email ou senha inválidos")),
       );
@@ -128,9 +128,30 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
 
-              // BOTÃO
+              // 🔥 ESQUECEU SENHA
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EmailConfirmacaoPage()
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Esqueceu sua senha?",
+                    style: TextStyle(color: Colors.blue),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // BOTÃO LOGIN
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
