@@ -1,170 +1,76 @@
 import 'package:flutter/material.dart';
+import '../services/api_connect.dart';
 
 class CadastroItensPage extends StatefulWidget {
-  const CadastroItensPage({super.key});
+  final int idVendedor;
+  const CadastroItensPage({super.key, required this.idVendedor});
 
   @override
   State<CadastroItensPage> createState() => _CadastroItensPageState();
 }
 
 class _CadastroItensPageState extends State<CadastroItensPage> {
-
   final nomeController = TextEditingController();
-  final descricaoController = TextEditingController();
-  final userIdController = TextEditingController();
-  final imagemController = TextEditingController(); // por enquanto URL
-
+  final descController = TextEditingController();
+  final precoController = TextEditingController();
+  final estoqueController = TextEditingController();
+  final catController = TextEditingController(); // ID da Categoria
   bool isLoading = false;
 
-  void cadastrarItem() {
-    print(nomeController.text);
-    print(descricaoController.text);
-    print(userIdController.text);
-    print(imagemController.text);
+  Future<void> enviarCadastro() async {
+    if (nomeController.text.isEmpty || precoController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Preencha nome e preço!")));
+      return;
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Item cadastrado (simulado)")),
+    setState(() => isLoading = true);
+    
+    final api = ServicoApi();
+    
+    // Chamada do método de cadastro de item
+    bool sucesso = await api.cadastrarNovoItem(
+      widget.idVendedor.toString(),
+      catController.text,
+      nomeController.text,
+      descController.text,
+      precoController.text,
+      estoqueController.text,
     );
+
+    setState(() => isLoading = false);
+
+    if (sucesso && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Produto cadastrado com sucesso!")));
+      // Limpa os campos
+      nomeController.clear();
+      precoController.clear();
+      descController.clear();
+      estoqueController.clear();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Erro ao cadastrar produto.")));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[50],
-
-      appBar: AppBar(
-        title: const Text("Cadastrar Item"),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-      ),
-
-      body: Center(
-        child: Container(
-          width: 320,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 10,
-                offset: Offset(0, 4),
+      appBar: AppBar(title: const Text("Cadastrar Produto")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(controller: nomeController, decoration: const InputDecoration(labelText: "Nome do Produto")),
+              TextField(controller: descController, decoration: const InputDecoration(labelText: "Descrição")),
+              TextField(controller: precoController, decoration: const InputDecoration(labelText: "Preço"), keyboardType: TextInputType.number),
+              TextField(controller: estoqueController, decoration: const InputDecoration(labelText: "Estoque"), keyboardType: TextInputType.number),
+              TextField(controller: catController, decoration: const InputDecoration(labelText: "ID Categoria")),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: isLoading ? null : enviarCadastro,
+                child: isLoading ? const CircularProgressIndicator() : const Text("Cadastrar Produto"),
               ),
             ],
-          ),
-
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-
-                const Icon(Icons.inventory, size: 60, color: Colors.blue),
-
-                const SizedBox(height: 10),
-
-                const Text(
-                  "Novo Item",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // NOME DO ITEM
-                TextField(
-                  controller: nomeController,
-                  decoration: InputDecoration(
-                    labelText: "Nome do Item",
-                    prefixIcon: const Icon(Icons.label, color: Colors.blue),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-
-                // DESCRIÇÃO
-                TextField(
-                  controller: descricaoController,
-                  decoration: InputDecoration(
-                    labelText: "Descrição",
-                    prefixIcon: const Icon(Icons.description, color: Colors.blue),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  maxLines: 3,
-                ),
-
-                const SizedBox(height: 15),
-
-                // ID DO USUÁRIO
-                TextField(
-                  controller: userIdController,
-                  decoration: InputDecoration(
-                    labelText: "ID do Usuário",
-                    prefixIcon: const Icon(Icons.person, color: Colors.blue),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-
-                const SizedBox(height: 15),
-
-                // IMAGEM (URL POR ENQUANTO)
-                TextField(
-                  controller: imagemController,
-                  decoration: InputDecoration(
-                    labelText: "URL da Imagem",
-                    prefixIcon: const Icon(Icons.image, color: Colors.blue),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // BOTÃO
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onPressed: isLoading ? null : cadastrarItem,
-                    child: isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Cadastrar Item"),
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // VOLTAR
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    "Voltar",
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/api_connect.dart';
 import 'cadastro_page.dart';
 import 'home_page.dart';
-import 'email_confirmacao.dart'; // 👈 IMPORTANTE
-
+import 'email_confirmacao.dart';
+import 'vendedor_home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,40 +12,55 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-
+class _LoginPageState extends State<LoginPage> { 
   final emailController = TextEditingController();
   final senhaController = TextEditingController();
-
   bool isLoading = false;
 
   Future<void> fazerLogin() async {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
     final api = ServicoApi();
-
     var resultado = await api.login(
       emailController.text,
       senhaController.text,
     );
 
-    setState(() {
-      isLoading = false;
-    });
+    setState(() => isLoading = false);
 
-    if (resultado != null) {
+    if (resultado != null && resultado.containsKey('user')) {
+      final Map<String, dynamic> userData = resultado['user'];
+
+      final rawId = userData['id'];
+      final rawType = userData['user_type'];
+
+      int idUsuarioLogado =
+          (rawId is int) ? rawId : int.tryParse(rawId.toString()) ?? 0;
+
+      final String tipoUsuario =
+          rawType != null ? rawType.toString().toLowerCase() : '';
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login realizado com sucesso!")),
       );
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HomePage(),
-        ),
-      );
+      if (tipoUsuario == 'vendedor') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                VendedorHomePage(idVendedor: idUsuarioLogado),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                HomePage(idUsuario: idUsuarioLogado),
+          ),
+        );
+      }
 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -58,14 +73,12 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[50],
-
       appBar: AppBar(
         title: const Text("Login"),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
-
       body: Center(
         child: Container(
           width: 320,
@@ -78,38 +91,22 @@ class _LoginPageState extends State<LoginPage> {
                 color: Colors.black26,
                 blurRadius: 10,
                 offset: Offset(0, 4),
-              ),
+              )
             ],
           ),
-
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
               const Icon(Icons.person, size: 60, color: Colors.blue),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                "Bem-vindo",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
-
               const SizedBox(height: 20),
 
               // EMAIL
               TextField(
                 controller: emailController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: "E-mail",
-                  prefixIcon: const Icon(Icons.email, color: Colors.blue),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  prefixIcon: Icon(Icons.email, color: Colors.blue),
+                  border: OutlineInputBorder(),
                 ),
               ),
 
@@ -119,18 +116,16 @@ class _LoginPageState extends State<LoginPage> {
               TextField(
                 controller: senhaController,
                 obscureText: true,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: "Senha",
-                  prefixIcon: const Icon(Icons.lock, color: Colors.blue),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  prefixIcon: Icon(Icons.lock, color: Colors.blue),
+                  border: OutlineInputBorder(),
                 ),
               ),
 
               const SizedBox(height: 10),
 
-              // 🔥 ESQUECEU SENHA
+              // ESQUECEU SENHA
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -138,7 +133,8 @@ class _LoginPageState extends State<LoginPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const EmailConfirmacaoPage()
+                        builder: (context) =>
+                            const EmailConfirmacaoPage(),
                       ),
                     );
                   },
@@ -158,39 +154,26 @@ class _LoginPageState extends State<LoginPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
                   ),
                   onPressed: isLoading ? null : fazerLogin,
                   child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Entrar"),
+                      : const Text(
+                          "Entrar",
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                 ),
               ),
 
-              const SizedBox(height: 10),
-
               // CADASTRO
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Não tem uma conta? "),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CadastroPage(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      "Cadastre-se",
-                      style: TextStyle(color: Colors.blue),
-                    ),
+              TextButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CadastroPage(),
                   ),
-                ],
+                ),
+                child: const Text("Cadastre-se"),
               ),
             ],
           ),

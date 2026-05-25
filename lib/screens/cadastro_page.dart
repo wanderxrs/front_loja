@@ -9,12 +9,11 @@ class CadastroPage extends StatefulWidget {
 }
 
 class _CadastroPageState extends State<CadastroPage> {
-
   final nomeController = TextEditingController();
   final emailController = TextEditingController();
   final senhaController = TextEditingController();
 
-  bool isAdmin = false; // ignorado por enquanto
+  bool queroSerVendedor = false; 
   bool isLoading = false;
 
   Future<void> cadastrar() async {
@@ -24,10 +23,12 @@ class _CadastroPageState extends State<CadastroPage> {
 
     final api = ServicoApi();
 
+    // passa o texto 'vendedor' ou 'cliente' baseado no botão
     var sucesso = await api.cadastrarUsuario(
       nomeController.text,
       emailController.text,
       senhaController.text,
+      queroSerVendedor ? "vendedor" : "cliente",
     );
 
     setState(() {
@@ -51,14 +52,12 @@ class _CadastroPageState extends State<CadastroPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[50],
-
       appBar: AppBar(
         title: const Text("Cadastro"),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
-
       body: Center(
         child: Container(
           width: 320,
@@ -74,15 +73,11 @@ class _CadastroPageState extends State<CadastroPage> {
               ),
             ],
           ),
-
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
               const Icon(Icons.person_add, size: 60, color: Colors.blue),
-
               const SizedBox(height: 10),
-
               const Text(
                 "Criar Conta",
                 style: TextStyle(
@@ -91,7 +86,6 @@ class _CadastroPageState extends State<CadastroPage> {
                   color: Colors.blue,
                 ),
               ),
-
               const SizedBox(height: 20),
 
               // NOME
@@ -105,7 +99,6 @@ class _CadastroPageState extends State<CadastroPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 15),
 
               // EMAIL
@@ -119,7 +112,6 @@ class _CadastroPageState extends State<CadastroPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 15),
 
               // SENHA
@@ -134,26 +126,42 @@ class _CadastroPageState extends State<CadastroPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 15), // Ajustado espaçamento
 
-              const SizedBox(height: 10),
-
-              // CHECKBOX (IGNORADO)
+              // botão de sim e não
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Checkbox(
-                    value: isAdmin,
-                    activeColor: Colors.blue,
-                    onChanged: (value) {
+                  const Text(
+                    "Quero ser vendedor?",
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      // Se for verdadeiro fica verde, se for falso fica azul
+                      backgroundColor: queroSerVendedor ? Colors.blue : Colors.grey[400],
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {
                       setState(() {
-                        isAdmin = value!;
+                        // inverte de true pra false
+                        queroSerVendedor = !queroSerVendedor;
                       });
                     },
+                    // Texto muda de sim para nao
+                    child: Text(
+                      queroSerVendedor ? "SIM" : "NÃO",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  const Text("Sou administrador"),
                 ],
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
 
               // BOTÃO CADASTRAR
               SizedBox(
@@ -161,6 +169,7 @@ class _CadastroPageState extends State<CadastroPage> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -168,14 +177,17 @@ class _CadastroPageState extends State<CadastroPage> {
                   ),
                   onPressed: isLoading ? null : cadastrar,
                   child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
                       : const Text(
                           "Cadastrar",
                           style: TextStyle(fontSize: 16),
                         ),
                 ),
               ),
-
               const SizedBox(height: 10),
 
               // VOLTAR LOGIN
