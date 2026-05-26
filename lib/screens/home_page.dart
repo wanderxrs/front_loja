@@ -11,138 +11,140 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final api = ServicoApi();
-  late Future<List<dynamic>> futureProdutos;
+  List<dynamic> _todosProdutos = [];
+  List<dynamic> _produtosFiltrados = [];
+  List<dynamic> _categorias = [];
+  String? _categoriaSelecionada = "0"; // Inicializado em "Todas"
 
   @override
   void initState() {
     super.initState();
-    futureProdutos = api.buscarProdutos();
+    _carregarDados();
+  }
+
+  Future<void> _carregarDados() async {
+    final prods = await api.buscarProdutos();
+    final cats = await api.buscarCategorias();
+    setState(() {
+      _todosProdutos = prods;
+      _produtosFiltrados = prods;
+      _categorias = cats;
+    });
+  }
+
+  void _filtrarPorCategoria(String? idCategoria) {
+    setState(() {
+      _categoriaSelecionada = idCategoria;
+      if (idCategoria == null || idCategoria == "0") {
+        _produtosFiltrados = _todosProdutos;
+      } else {
+        _produtosFiltrados = _todosProdutos.where((p) => 
+          p['category_id'].toString() == idCategoria
+        ).toList();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Loja Virtual")),
-      body: FutureBuilder<List<dynamic>>(
-        future: futureProdutos,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("Nenhum produto disponível."));
-          }
-
-          final produtos = snapshot.data!;
-          return ListView.builder(
-            itemCount: produtos.length,
-            itemBuilder: (context, index) {
-              final prod = produtos[index];
-              
-              final String nome = prod['name']?.toString() ?? 'Sem nome';
-              final String preco = prod['price']?.toString() ?? '0.00';
-              final int idProduto = prod['id'] ?? 0;
-              final String imageUrl = prod['image_url'] ?? '';
-              final int estoque = prod['stock'] ?? 0;
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                child: ListTile(
-                  leading: SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: imageUrl.isNotEmpty
-                        ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image))
-                        : const Icon(Icons.shopping_bag),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: DropdownButtonFormField<String>(
+              decoration: const InputDecoration(labelText: "Filtrar por Categoria", border: OutlineInputBorder()),
+              value: _categoriaSelecionada,
+              items: [
+                const DropdownMenuItem(value: "0", child: Text("Todas as categorias")),
+                ..._categorias.map((cat) => DropdownMenuItem(
+                  value: cat['id'].toString(),
+                  child: Text(cat['name']),
+                )),
+              ],
+              onChanged: _filtrarPorCategoria,
+            ),
+          ),
+          Expanded(
+            child: _produtosFiltrados.isEmpty
+                ? const Center(child: Text("Nenhum produto encontrado."))
+                : ListView.builder(
+                    itemCount: _produtosFiltrados.length,
+                    itemBuilder: (context, index) {
+                      final prod = _produtosFiltrados[index];
+                      return _buildProdutoCard(prod);
+                    },
                   ),
-                  title: Text(nome, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("R\$ $preco"),
-                      Text("Estoque: $estoque", style: TextStyle(color: estoque > 0 ? Colors.green : Colors.red)),
-                    ],
-                  ),
-                  // Substitua o ElevatedButton atual dentro do ListTile por este:
-trailing: ElevatedButton(
-  onPressed: estoque > 0
-      ? () {
-          int quantidadeEscolhida = 1; // Quantidade inicial
+          ),
+        ],
+      ),
+    );
+  }
 
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              // StatefulBuilder permite atualizar o número dentro do diálogo
-              return StatefulBuilder(
-                builder: (context, setDialogState) {
-                  return AlertDialog(
-                    title: const Text("Confirmar Compra"),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text("Deseja comprar '$nome'?"),
-                        const SizedBox(height: 15),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove_circle, color: Colors.red),
-                              onPressed: quantidadeEscolhida > 1
-                                  ? () => setDialogState(() => quantidadeEscolhida--)
-                                  : null,
-                            ),
-                            Text("$quantidadeEscolhida", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                            IconButton(
-                              icon: const Icon(Icons.add_circle, color: Colors.green),
-                              onPressed: quantidadeEscolhida < estoque
-                                  ? () => setDialogState(() => quantidadeEscolhida++)
-                                  : null,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text("Cancelar"),
-                      ),
-                                        ElevatedButton(
-                                          onPressed: () async {
-                                            Navigator.of(context).pop();
-                                            
-                                            // AQUI: Passamos a quantidadeEscolhida para a API
-                                            // (Certifique-se de que sua função comprarItem no api_connect aceite este parâmetro)
-                                            bool sucesso = await api.comprarItem(widget.idUsuario, idProduto, quantidadeEscolhida);
-                                            
-                                            if (mounted && sucesso) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text("Compra realizada com sucesso!")),
-                                              );
-                                              setState(() { futureProdutos = api.buscarProdutos(); });
-                                            } else if (mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text("Erro ao realizar compra.")),
-                                              );
-                                            }
-                                          },
-                                          child: const Text("Confirmar"),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                            );
-                          }
-                        : null,
-                    child: const Text("Comprar"),
-                  ),
-                ),
-              );
-            },
-          );
-        },
+  Widget _buildProdutoCard(dynamic prod) {
+    final String nome = prod['name']?.toString() ?? 'Sem nome';
+    final String preco = prod['price']?.toString() ?? '0.00';
+    final int idProduto = prod['id'] ?? 0;
+    final int estoque = prod['stock'] ?? 0;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: ListTile(
+        title: Text(nome, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("R\$ $preco"),
+            Text("Estoque: $estoque", style: TextStyle(color: estoque > 0 ? Colors.green : Colors.red)),
+          ],
+        ),
+        trailing: ElevatedButton(
+          onPressed: estoque > 0 ? () => _mostrarDialogoCompra(prod) : null,
+          child: const Text("Comprar"),
+        ),
+      ),
+    );
+  }
+
+  void _mostrarDialogoCompra(dynamic prod) {
+    int quantidadeEscolhida = 1;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text("Comprar ${prod['name']}"),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove_circle, color: Colors.red),
+                onPressed: quantidadeEscolhida > 1 ? () => setDialogState(() => quantidadeEscolhida--) : null,
+              ),
+              Text("$quantidadeEscolhida", style: const TextStyle(fontSize: 20)),
+              IconButton(
+                icon: const Icon(Icons.add_circle, color: Colors.green),
+                onPressed: quantidadeEscolhida < prod['stock'] ? () => setDialogState(() => quantidadeEscolhida++) : null,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                bool sucesso = await api.comprarItem(widget.idUsuario, prod['id'], quantidadeEscolhida);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(sucesso ? "Compra realizada!" : "Erro na compra."),
+                  ));
+                  if (sucesso) _carregarDados();
+                }
+              },
+              child: const Text("Confirmar"),
+            ),
+          ],
+        ),
       ),
     );
   }

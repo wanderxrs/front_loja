@@ -10,10 +10,7 @@ class ServicoApi {
       final response = await http.post(
         Uri.parse("$baseUrl/login"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "password": senha,
-        }),
+        body: jsonEncode({"email": email, "password": senha}),
       );
 
       if (response.statusCode == 200) {
@@ -22,7 +19,6 @@ class ServicoApi {
 
       print("Erro login: ${response.body}");
       return null;
-
     } catch (e) {
       print("Erro conexão login: $e");
       return null;
@@ -49,7 +45,6 @@ class ServicoApi {
       );
 
       return response.statusCode == 201;
-
     } catch (e) {
       print("Erro cadastro: $e");
       return false;
@@ -62,16 +57,13 @@ class ServicoApi {
       final response = await http.post(
         Uri.parse("$baseUrl/recuperarSenha"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-        }),
+        body: jsonEncode({"email": email}),
       );
 
       print("RECUPERAR STATUS: ${response.statusCode}");
       print("RECUPERAR BODY: ${response.body}");
 
       return response.statusCode == 200;
-
     } catch (e) {
       print("Erro recuperar senha: $e");
       return false;
@@ -84,9 +76,7 @@ class ServicoApi {
       final response = await http.post(
         Uri.parse("$baseUrl/verificarCodigo"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "codigo": codigo,
-        }),
+        body: jsonEncode({"codigo": codigo}),
       );
 
       print("VERIFICAR STATUS: ${response.statusCode}");
@@ -98,7 +88,6 @@ class ServicoApi {
       }
 
       return false;
-
     } catch (e) {
       print("Erro verificar codigo: $e");
       return false;
@@ -111,17 +100,13 @@ class ServicoApi {
       final response = await http.post(
         Uri.parse("$baseUrl/redefinirSenha"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "senha": senha,
-        }),
+        body: jsonEncode({"email": email, "senha": senha}),
       );
 
       print("REDEFINIR STATUS: ${response.statusCode}");
       print("REDEFINIR BODY: ${response.body}");
 
       return response.statusCode == 200;
-
     } catch (e) {
       print("Erro redefinir senha: $e");
       return false;
@@ -131,14 +116,11 @@ class ServicoApi {
   // ================= PRODUTOS =================
   Future<List<dynamic>> buscarProdutos() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/listarProdutos'),
-      );
+      final response = await http.get(Uri.parse('$baseUrl/listarProdutos'));
 
       if (response.statusCode == 200) {
         return jsonDecode(utf8.decode(response.bodyBytes));
       }
-
     } catch (e) {
       print("Erro buscar produtos: $e");
     }
@@ -160,7 +142,6 @@ class ServicoApi {
       );
 
       return response.statusCode == 200;
-
     } catch (e) {
       print("Erro compra: $e");
       return false;
@@ -191,7 +172,6 @@ class ServicoApi {
       );
 
       return response.statusCode == 201 || response.statusCode == 200;
-
     } catch (e) {
       print("Erro cadastrar item: $e");
       return false;
@@ -208,7 +188,6 @@ class ServicoApi {
       if (response.statusCode == 200) {
         return jsonDecode(utf8.decode(response.bodyBytes));
       }
-
     } catch (e) {
       print("Erro produtos vendedor: $e");
     }
@@ -234,7 +213,6 @@ class ServicoApi {
       );
 
       return response.statusCode == 200;
-
     } catch (e) {
       print("Erro editar item: $e");
       return false;
@@ -247,17 +225,31 @@ class ServicoApi {
       final response = await http.delete(
         Uri.parse('$baseUrl/excluirItem'),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          'fkUser': idVendedor,
-          'id': idProduto,
-        }),
+        body: jsonEncode({'fkUser': idVendedor, 'id': idProduto}),
       );
 
       return response.statusCode == 200;
-
     } catch (e) {
       print("Erro excluir item: $e");
       return false;
+    }
+  }
+
+  // Adicione isto dentro da classe ServicoApi no seu arquivo api_connect.dart
+  Future<List<dynamic>> buscarCategorias() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/listarCategorias'));
+
+      if (response.statusCode == 200) {
+        // O jsonDecode transforma o JSON do Flask em uma lista do Dart
+        return jsonDecode(response.body);
+      } else {
+        print("Erro na API: ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("Erro ao conectar com a API: $e");
+      return [];
     }
   }
 }

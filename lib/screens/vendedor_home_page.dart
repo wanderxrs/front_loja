@@ -81,7 +81,21 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
     );
   }
 
-  void _mostrarDialogoEdicao(Map<String, dynamic> prod) {
+  void _mostrarDialogoEdicao(Map<String, dynamic> prod) async {
+    // Busca categorias para o Dropdown
+    List<dynamic> categorias = await api.buscarCategorias();
+    
+    print("DEBUG: Total de categorias recebidas: ${categorias.length}");
+    print("DEBUG: Conteúdo: $categorias");
+
+    if (categorias.isEmpty) {
+      print("DEBUG: ERRO - Lista vazia!");
+    }
+
+    // Define a categoria atual do produto
+    String categoriaSelecionada = prod['category_id']?.toString() ?? 
+                                  (categorias.isNotEmpty ? categorias.first['id'].toString() : '');
+
     final nomeController = TextEditingController(text: prod['name']);
     final precoController = TextEditingController(text: prod['price'].toString());
     final estoqueController = TextEditingController(text: prod['stock'].toString());
@@ -89,45 +103,59 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Editar Produto"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nomeController, decoration: const InputDecoration(labelText: "Nome")),
-              TextField(controller: precoController, decoration: const InputDecoration(labelText: "Preço")),
-              TextField(controller: estoqueController, decoration: const InputDecoration(labelText: "Estoque")),
-              TextField(controller: descController, decoration: const InputDecoration(labelText: "Descrição")),
-            ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text("Editar Produto"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nomeController, decoration: const InputDecoration(labelText: "Nome")),
+                TextField(controller: precoController, decoration: const InputDecoration(labelText: "Preço")),
+                TextField(controller: estoqueController, decoration: const InputDecoration(labelText: "Estoque")),
+                TextField(controller: descController, decoration: const InputDecoration(labelText: "Descrição")),
+                const SizedBox(height: 15),
+                DropdownButtonFormField<String>(
+                  value: categoriaSelecionada.isNotEmpty ? categoriaSelecionada : null,
+                  decoration: const InputDecoration(labelText: "Categoria"),
+                  items: categorias.map((cat) {
+                    return DropdownMenuItem<String>(
+                      value: cat['id'].toString(),
+                      child: Text("${cat['name']} (ID: ${cat['id']})"),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setDialogState(() => categoriaSelecionada = value!),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
-          ElevatedButton(
-            onPressed: () async {
-              Map<String, dynamic> dadosEditados = {
-                'id': prod['id'],
-                'category_id': prod['category_name'] ?? '1',
-                'nome': nomeController.text,
-                'descricao': descController.text,
-                'preco': precoController.text,
-                'estoque': estoqueController.text,
-              };
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+            ElevatedButton(
+              onPressed: () async {
+                Map<String, dynamic> dadosEditados = {
+                  'id': prod['id'],
+                  'category_id': categoriaSelecionada,
+                  'nome': nomeController.text,
+                  'descricao': descController.text,
+                  'preco': precoController.text,
+                  'estoque': estoqueController.text,
+                };
 
-              bool sucesso = await api.editarItem(widget.idVendedor, dadosEditados);
-              
-              if (sucesso && mounted) {
-                Navigator.pop(context);
-                _atualizarProdutos();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Produto atualizado!")));
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Erro ao editar.")));
-              }
-            },
-            child: const Text("Salvar"),
-          ),
-        ],
+                bool sucesso = await api.editarItem(widget.idVendedor, dadosEditados);
+                
+                if (sucesso && mounted) {
+                  Navigator.pop(context);
+                  _atualizarProdutos();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Produto atualizado!")));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Erro ao editar.")));
+                }
+              },
+              child: const Text("Salvar"),
+            ),
+          ],
+        ),
       ),
     );
   }
