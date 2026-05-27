@@ -268,6 +268,6 @@ class ServicoApi {
   }
 
   return [];
-}
+  }
 
 }

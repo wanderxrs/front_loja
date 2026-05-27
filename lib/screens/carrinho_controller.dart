@@ -22,7 +22,7 @@ class CarrinhoController {
     }
   }
 
-  // 🔥 DIMINUI 1
+
   void diminuirQuantidade(int index) {
     if (itens[index]['quantidade'] > 1) {
       itens[index]['quantidade']--;
@@ -31,12 +31,12 @@ class CarrinhoController {
     }
   }
 
-  // 🔥 AUMENTA 1
+ 
   void aumentarQuantidade(int index) {
     itens[index]['quantidade']++;
   }
 
-  // ❌ REMOVE TOTAL
+
   void removerItem(int index) {
     itens.removeAt(index);
   }

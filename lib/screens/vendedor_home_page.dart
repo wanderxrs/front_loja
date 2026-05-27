@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_connect.dart';
 import 'cadastro_itens.dart';
+import 'login_page.dart';
 
 class VendedorHomePage extends StatefulWidget {
   final int idVendedor;
@@ -31,6 +32,15 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
     });
   }
 
+  // ================= LOGOUT =================
+  void _logout() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,6 +52,13 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
+
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red),
+            onPressed: _logout,
+          ),
+        ],
       ),
 
       floatingActionButton: FloatingActionButton(
@@ -173,7 +190,7 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
                     return DropdownMenuItem<String>(
                       value: cat['id'].toString(),
                       child: Text(
-                        "${cat['name']}",
+                        cat['name'],
                         style: TextStyle(color: textColor),
                       ),
                     );
@@ -248,6 +265,7 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
               Navigator.pop(context);
               bool sucesso =
                   await api.excluirItem(widget.idVendedor, idProduto);
+
               if (sucesso) {
                 _atualizarProdutos();
                 ScaffoldMessenger.of(context).showSnackBar(
