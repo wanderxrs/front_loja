@@ -17,6 +17,11 @@ class _LoginPageState extends State<LoginPage> {
   final senhaController = TextEditingController();
   bool isLoading = false;
 
+  final Color primaryColor = const Color(0xFFFF6A00);
+  final Color backgroundColor = const Color(0xFF0D0D0D);
+  final Color cardColor = const Color(0xFF1A1A1A);
+  final Color textColor = const Color(0xFFF5F5F5);
+
   Future<void> fazerLogin() async {
     setState(() => isLoading = true);
 
@@ -72,60 +77,84 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[50],
+      backgroundColor: backgroundColor,
+
       appBar: AppBar(
-        title: const Text("Login"),
-        backgroundColor: Colors.blue,
+        title: const Text("MARKETX"),
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
+
       body: Center(
         child: Container(
           width: 320,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(15),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              )
-            ],
           ),
+
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.person, size: 60, color: Colors.blue),
+              Text(
+                "MARKETX",
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              Text(
+                "Bem vindo!",
+                style: TextStyle(
+                  color: textColor.withOpacity(0.7),
+                  fontSize: 12,
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              Icon(Icons.person, size: 60, color: primaryColor),
+
               const SizedBox(height: 20),
 
-              // EMAIL
               TextField(
                 controller: emailController,
-                decoration: const InputDecoration(
+                style: TextStyle(color: textColor),
+                decoration: InputDecoration(
                   labelText: "E-mail",
-                  prefixIcon: Icon(Icons.email, color: Colors.blue),
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(color: textColor),
+                  prefixIcon: Icon(Icons.email, color: primaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
 
               const SizedBox(height: 15),
 
-              // SENHA
               TextField(
                 controller: senhaController,
                 obscureText: true,
-                decoration: const InputDecoration(
+                style: TextStyle(color: textColor),
+                decoration: InputDecoration(
                   labelText: "Senha",
-                  prefixIcon: Icon(Icons.lock, color: Colors.blue),
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(color: textColor),
+                  prefixIcon: Icon(Icons.lock, color: primaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
 
               const SizedBox(height: 10),
 
-              // ESQUECEU SENHA
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -138,21 +167,20 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     );
                   },
-                  child: const Text(
+                  child: Text(
                     "Esqueceu sua senha?",
-                    style: TextStyle(color: Colors.blue),
+                    style: TextStyle(color: primaryColor),
                   ),
                 ),
               ),
 
               const SizedBox(height: 10),
 
-              // BOTÃO LOGIN
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
                   onPressed: isLoading ? null : fazerLogin,
@@ -165,7 +193,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              // CADASTRO
               TextButton(
                 onPressed: () => Navigator.push(
                   context,
@@ -173,7 +200,10 @@ class _LoginPageState extends State<LoginPage> {
                     builder: (context) => const CadastroPage(),
                   ),
                 ),
-                child: const Text("Cadastre-se"),
+                child: Text(
+                  "Criar conta",
+                  style: TextStyle(color: primaryColor),
+                ),
               ),
             ],
           ),

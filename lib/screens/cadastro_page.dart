@@ -16,6 +16,12 @@ class _CadastroPageState extends State<CadastroPage> {
   bool queroSerVendedor = false; 
   bool isLoading = false;
 
+
+  final Color primaryColor = const Color(0xFFFF6A00);
+  final Color backgroundColor = const Color(0xFF0D0D0D);
+  final Color cardColor = const Color(0xFF1A1A1A);
+  final Color textColor = const Color(0xFFF5F5F5);
+
   Future<void> cadastrar() async {
     setState(() {
       isLoading = true;
@@ -23,7 +29,6 @@ class _CadastroPageState extends State<CadastroPage> {
 
     final api = ServicoApi();
 
-    // passa o texto 'vendedor' ou 'cliente' baseado no botão
     var sucesso = await api.cadastrarUsuario(
       nomeController.text,
       emailController.text,
@@ -40,7 +45,7 @@ class _CadastroPageState extends State<CadastroPage> {
         const SnackBar(content: Text("Cadastro realizado com sucesso!")),
       );
 
-      Navigator.pop(context); // volta pro login
+      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Erro ao cadastrar usuário")),
@@ -51,49 +56,49 @@ class _CadastroPageState extends State<CadastroPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[50],
+      backgroundColor: backgroundColor,
+
       appBar: AppBar(
         title: const Text("Cadastro"),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
+
       body: Center(
         child: Container(
           width: 320,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(15),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              ),
-            ],
           ),
+
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.person_add, size: 60, color: Colors.blue),
+              Icon(Icons.person_add, size: 60, color: primaryColor),
               const SizedBox(height: 10),
-              const Text(
+
+              Text(
                 "Criar Conta",
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+                  color: primaryColor,
                 ),
               ),
+
               const SizedBox(height: 20),
 
               // NOME
               TextField(
                 controller: nomeController,
+                style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   labelText: "Nome",
-                  prefixIcon: const Icon(Icons.person, color: Colors.blue),
+                  labelStyle: TextStyle(color: textColor),
+                  prefixIcon: Icon(Icons.person, color: primaryColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -104,9 +109,11 @@ class _CadastroPageState extends State<CadastroPage> {
               // EMAIL
               TextField(
                 controller: emailController,
+                style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   labelText: "E-mail",
-                  prefixIcon: const Icon(Icons.email, color: Colors.blue),
+                  labelStyle: TextStyle(color: textColor),
+                  prefixIcon: Icon(Icons.email, color: primaryColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -118,44 +125,41 @@ class _CadastroPageState extends State<CadastroPage> {
               TextField(
                 controller: senhaController,
                 obscureText: true,
+                style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   labelText: "Senha",
-                  prefixIcon: const Icon(Icons.lock, color: Colors.blue),
+                  labelStyle: TextStyle(color: textColor),
+                  prefixIcon: Icon(Icons.lock, color: primaryColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
-              const SizedBox(height: 15), // Ajustado espaçamento
 
-              // botão de sim e não
+              const SizedBox(height: 15),
+
+              // BOTÃO SIM/NÃO
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     "Quero ser vendedor?",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                    style: TextStyle(color: textColor),
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      // Se for verdadeiro fica verde, se for falso fica azul
-                      backgroundColor: queroSerVendedor ? Colors.blue : Colors.grey[400],
+                      backgroundColor: queroSerVendedor
+                          ? primaryColor
+                          : Colors.grey,
                       foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
                     ),
                     onPressed: () {
                       setState(() {
-                        // inverte de true pra false
                         queroSerVendedor = !queroSerVendedor;
                       });
                     },
-                    // Texto muda de sim para nao
                     child: Text(
                       queroSerVendedor ? "SIM" : "NÃO",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -168,26 +172,26 @@ class _CadastroPageState extends State<CadastroPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
+                    backgroundColor: primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
                   ),
                   onPressed: isLoading ? null : cadastrar,
                   child: isLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : const Text(
                           "Cadastrar",
-                          style: TextStyle(fontSize: 16),
+                          style: TextStyle(color: Colors.white),
                         ),
                 ),
               ),
+
               const SizedBox(height: 10),
 
               // VOLTAR LOGIN
@@ -195,9 +199,9 @@ class _CadastroPageState extends State<CadastroPage> {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: const Text(
+                child: Text(
                   "Voltar para o login",
-                  style: TextStyle(color: Colors.blue),
+                  style: TextStyle(color: primaryColor),
                 ),
               ),
             ],

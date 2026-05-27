@@ -16,6 +16,11 @@ class _ConfirmarCodigoLoginState extends State<ConfirmarCodigoLogin> {
   final codigoController = TextEditingController();
   bool isLoading = false;
 
+  final Color primaryColor = const Color(0xFFFF6A00);
+  final Color backgroundColor = const Color(0xFF0D0D0D);
+  final Color cardColor = const Color(0xFF1A1A1A);
+  final Color textColor = const Color(0xFFF5F5F5);
+
   Future<void> verificarCodigo() async {
     String codigo = codigoController.text;
 
@@ -43,7 +48,6 @@ class _ConfirmarCodigoLoginState extends State<ConfirmarCodigoLogin> {
         const SnackBar(content: Text("Código correto!")),
       );
 
-      // 🔥 AGORA VAI PRA REDEFINIR SENHA
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -69,13 +73,14 @@ class _ConfirmarCodigoLoginState extends State<ConfirmarCodigoLogin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[50],
+      backgroundColor: backgroundColor,
 
       appBar: AppBar(
         title: const Text("Confirmar Código"),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         centerTitle: true,
+        elevation: 0,
       ),
 
       body: Center(
@@ -83,29 +88,25 @@ class _ConfirmarCodigoLoginState extends State<ConfirmarCodigoLogin> {
           width: 320,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(15),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              ),
-            ],
           ),
 
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
 
-              const Icon(Icons.lock, size: 60, color: Colors.blue),
+              Icon(Icons.lock, size: 60, color: primaryColor),
 
               const SizedBox(height: 15),
 
-              const Text(
+              Text(
                 "Digite o código que você recebeu no email",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: textColor,
+                ),
               ),
 
               const SizedBox(height: 20),
@@ -113,9 +114,11 @@ class _ConfirmarCodigoLoginState extends State<ConfirmarCodigoLogin> {
               TextField(
                 controller: codigoController,
                 keyboardType: TextInputType.number,
+                style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   labelText: "Código",
-                  prefixIcon: const Icon(Icons.confirmation_number),
+                  labelStyle: TextStyle(color: textColor),
+                  prefixIcon: Icon(Icons.confirmation_number, color: primaryColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -129,12 +132,15 @@ class _ConfirmarCodigoLoginState extends State<ConfirmarCodigoLogin> {
                 child: ElevatedButton(
                   onPressed: isLoading ? null : verificarCodigo,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
                   child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Confirmar"),
+                      : const Text(
+                          "Confirmar",
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ),
             ],

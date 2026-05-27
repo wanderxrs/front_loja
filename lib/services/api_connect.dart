@@ -252,4 +252,22 @@ class ServicoApi {
       return [];
     }
   }
+  //==================cariinho=======================
+
+  Future<List<dynamic>> buscarCarrinho() async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/listarProdutos'),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    }
+  } catch (e) {
+    print("Erro carrinho: $e");
+  }
+
+  return [];
+}
+
 }

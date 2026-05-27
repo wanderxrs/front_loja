@@ -16,10 +16,14 @@ class _RedefinirSenhaPageState extends State<RedefinirSenhaPage> {
   final senhaController = TextEditingController();
   bool isLoading = false;
 
+  final Color primaryColor = const Color(0xFFFF6A00);
+  final Color backgroundColor = const Color(0xFF0D0D0D);
+  final Color cardColor = const Color(0xFF1A1A1A);
+  final Color textColor = const Color(0xFFF5F5F5);
+
   Future<void> redefinirSenha() async {
     String novaSenha = senhaController.text;
 
-    // 🔥 DEBUG (ESSENCIAL)
     print("EMAIL RECEBIDO: ${widget.email}");
     print("NOVA SENHA: $novaSenha");
 
@@ -74,13 +78,14 @@ class _RedefinirSenhaPageState extends State<RedefinirSenhaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[50],
+      backgroundColor: backgroundColor,
 
       appBar: AppBar(
         title: const Text("Nova Senha"),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         centerTitle: true,
+        elevation: 0,
       ),
 
       body: Center(
@@ -88,29 +93,25 @@ class _RedefinirSenhaPageState extends State<RedefinirSenhaPage> {
           width: 320,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(15),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              ),
-            ],
           ),
 
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
 
-              const Icon(Icons.lock_reset, size: 60, color: Colors.blue),
+              Icon(Icons.lock_reset, size: 60, color: primaryColor),
 
               const SizedBox(height: 15),
 
-              const Text(
+              Text(
                 "Digite sua nova senha",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: textColor,
+                ),
               ),
 
               const SizedBox(height: 20),
@@ -118,9 +119,11 @@ class _RedefinirSenhaPageState extends State<RedefinirSenhaPage> {
               TextField(
                 controller: senhaController,
                 obscureText: true,
+                style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   labelText: "Nova senha",
-                  prefixIcon: const Icon(Icons.lock),
+                  labelStyle: TextStyle(color: textColor),
+                  prefixIcon: Icon(Icons.lock, color: primaryColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -134,12 +137,15 @@ class _RedefinirSenhaPageState extends State<RedefinirSenhaPage> {
                 child: ElevatedButton(
                   onPressed: isLoading ? null : redefinirSenha,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
                   child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Salvar nova senha"),
+                      : const Text(
+                          "Salvar nova senha",
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ),
             ],

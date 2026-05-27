@@ -17,8 +17,13 @@ class _CadastroItensPageState extends State<CadastroItensPage> {
   final estoqueController = TextEditingController();
 
   List<dynamic> _categorias = [];
-  String? _categoriaSelecionada; // Armazena o ID da categoria escolhida
+  String? _categoriaSelecionada;
   bool isLoading = false;
+
+  final Color primaryColor = const Color(0xFFFF6A00);
+  final Color backgroundColor = const Color(0xFF0D0D0D);
+  final Color cardColor = const Color(0xFF1A1A1A);
+  final Color textColor = const Color(0xFFF5F5F5);
 
   @override
   void initState() {
@@ -49,7 +54,7 @@ class _CadastroItensPageState extends State<CadastroItensPage> {
 
     bool sucesso = await api.cadastrarNovoItem(
       widget.idVendedor.toString(),
-      _categoriaSelecionada!, // Envia o ID selecionado
+      _categoriaSelecionada!,
       nomeController.text,
       descController.text,
       precoController.text,
@@ -62,7 +67,7 @@ class _CadastroItensPageState extends State<CadastroItensPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Produto cadastrado com sucesso!")),
       );
-      Navigator.pop(context); // Volta para a página do vendedor
+      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Erro ao cadastrar produto.")),
@@ -71,44 +76,47 @@ class _CadastroItensPageState extends State<CadastroItensPage> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Cadastrar Produto")),
+      backgroundColor: backgroundColor,
+
+      appBar: AppBar(
+        title: const Text("Cadastrar Produto"),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 0,
+      ),
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
             children: [
-              TextField(
-                controller: nomeController,
-                decoration: const InputDecoration(labelText: "Nome do Produto"),
-              ),
-              TextField(
-                controller: descController,
-                decoration: const InputDecoration(labelText: "Descrição"),
-              ),
-              TextField(
-                controller: precoController,
-                decoration: const InputDecoration(labelText: "Preço"),
-                keyboardType: TextInputType.number,
-              ),
-              TextField(
-                controller: estoqueController,
-                decoration: const InputDecoration(labelText: "Estoque"),
-                keyboardType: TextInputType.number,
-              ),
+
+              _buildField(nomeController, "Nome do Produto"),
+              const SizedBox(height: 10),
+
+              _buildField(descController, "Descrição"),
+              const SizedBox(height: 10),
+
+              _buildField(precoController, "Preço", number: true),
+              const SizedBox(height: 10),
+
+              _buildField(estoqueController, "Estoque", number: true),
 
               const SizedBox(height: 15),
 
-              // CAMPO CORRIGIDO:
               _categorias.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : DropdownButtonFormField<String>(
+                      dropdownColor: cardColor,
                       value: _categoriaSelecionada,
-                      decoration: const InputDecoration(
+                      style: TextStyle(color: textColor),
+                      decoration: InputDecoration(
                         labelText: "Selecione a Categoria",
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: textColor),
+                        border: const OutlineInputBorder(),
                       ),
                       items: _categorias.map((cat) {
                         return DropdownMenuItem<String>(
@@ -124,15 +132,40 @@ class _CadastroItensPageState extends State<CadastroItensPage> {
                     ),
 
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: isLoading ? null : enviarCadastro,
-                child: isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text("Cadastrar Produto"),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : enviarCadastro,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          "Cadastrar Produto",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildField(TextEditingController controller, String label,
+      {bool number = false}) {
+    return TextField(
+      controller: controller,
+      keyboardType: number ? TextInputType.number : TextInputType.text,
+      style: TextStyle(color: textColor),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: textColor),
+        border: const OutlineInputBorder(),
       ),
     );
   }
