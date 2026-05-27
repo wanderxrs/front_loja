@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_connect.dart';
 import 'carrinho_page.dart';
-import 'carrinho_controller.dart';
+import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
   final int idUsuario;
@@ -13,6 +13,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final api = ServicoApi();
+
   List<dynamic> _todosProdutos = [];
   List<dynamic> _produtosFiltrados = [];
   List<dynamic> _categorias = [];
@@ -32,6 +33,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _carregarDados() async {
     final prods = await api.buscarProdutos();
     final cats = await api.buscarCategorias();
+
     setState(() {
       _todosProdutos = prods;
       _produtosFiltrados = prods;
@@ -51,6 +53,14 @@ class _HomePageState extends State<HomePage> {
             .toList();
       }
     });
+  }
+
+  void _logout() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (route) => false,
+    );
   }
 
   @override
@@ -80,6 +90,11 @@ class _HomePageState extends State<HomePage> {
               _carregarDados();
             },
           ),
+
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red),
+            onPressed: _logout,
+          ),
         ],
       ),
 
@@ -89,6 +104,7 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.all(8.0),
             child: DropdownButtonFormField<String>(
               dropdownColor: cardColor,
+              value: _categoriaSelecionada,
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 labelText: "Filtrar por Categoria",
@@ -99,7 +115,6 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              value: _categoriaSelecionada,
               items: [
                 const DropdownMenuItem(
                   value: "0",
@@ -150,10 +165,7 @@ class _HomePageState extends State<HomePage> {
       child: ListTile(
         title: Text(
           nome,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,95 +183,8 @@ class _HomePageState extends State<HomePage> {
           style: ElevatedButton.styleFrom(
             backgroundColor: primaryColor,
           ),
-          onPressed: estoque > 0
-              ? () => _mostrarDialogoCompra(prod)
-              : null,
-          child: const Text(
-            "Comprar",
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _mostrarDialogoCompra(dynamic prod) {
-    int quantidadeEscolhida = 1;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: cardColor,
-          title: Text(
-            "Comprar ${prod['name']}",
-            style: TextStyle(color: textColor),
-          ),
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.remove_circle, color: Colors.red),
-                onPressed: quantidadeEscolhida > 1
-                    ? () => setDialogState(() => quantidadeEscolhida--)
-                    : null,
-              ),
-              Text(
-                "$quantidadeEscolhida",
-                style: TextStyle(fontSize: 20, color: textColor),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add_circle, color: Colors.green),
-                onPressed: quantidadeEscolhida < prod['stock']
-                    ? () => setDialogState(() => quantidadeEscolhida++)
-                    : null,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Cancelar", style: TextStyle(color: primaryColor)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-              ),
-              onPressed: () async {
-                Navigator.pop(context);
-
-                int idProduto = int.parse(prod['id'].toString());
-
-                bool sucesso = await api.comprarItem(
-                  widget.idUsuario,
-                  idProduto,
-                  quantidadeEscolhida,
-                );
-
-                if (sucesso) {
-                  CarrinhoController().adicionarItem(
-                    prod,
-                    quantidadeEscolhida,
-                  );
-                }
-
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        sucesso
-                            ? "Adicionado!"
-                            : "Erro na compra.",
-                      ),
-                    ),
-                  );
-
-                  if (sucesso) _carregarDados();
-                }
-              },
-              child: const Text("Confirmar"),
-            ),
-          ],
+          onPressed: estoque > 0 ? () {} : null,
+          child: const Text("Comprar"),
         ),
       ),
     );
