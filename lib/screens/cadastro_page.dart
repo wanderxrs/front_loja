@@ -13,9 +13,8 @@ class _CadastroPageState extends State<CadastroPage> {
   final emailController = TextEditingController();
   final senhaController = TextEditingController();
 
-  bool queroSerVendedor = false; 
+  bool queroSerVendedor = false;
   bool isLoading = false;
-
 
   final Color primaryColor = const Color(0xFFFF6A00);
   final Color backgroundColor = const Color(0xFF0D0D0D);
@@ -23,6 +22,15 @@ class _CadastroPageState extends State<CadastroPage> {
   final Color textColor = const Color(0xFFF5F5F5);
 
   Future<void> cadastrar() async {
+    if (!emailController.text.endsWith("@gmail.com")) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("O e-mail precisa terminar com @gmail.com"),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
@@ -158,9 +166,7 @@ class _CadastroPageState extends State<CadastroPage> {
                         queroSerVendedor = !queroSerVendedor;
                       });
                     },
-                    child: Text(
-                      queroSerVendedor ? "SIM" : "NÃO",
-                    ),
+                    child: Text(queroSerVendedor ? "SIM" : "NÃO"),
                   ),
                 ],
               ),
