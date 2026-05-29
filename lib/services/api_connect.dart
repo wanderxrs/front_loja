@@ -361,4 +361,17 @@ class ServicoApi {
       print("Erro remover carrinho: $e");
     }
   }
+
+  Future<bool> atualizarQuantidade(int id, int quantidade) async {
+  final response = await http.put(
+    Uri.parse("$baseUrl/carrinho/atualizar"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "id": id,
+      "quantidade": quantidade,
+    }),
+  );
+
+  return response.statusCode == 200;
+}
 }

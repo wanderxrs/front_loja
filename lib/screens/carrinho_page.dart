@@ -27,13 +27,11 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
     _carregarCarrinho();
   }
 
+  // ================= CARREGAR =================
   Future<void> _carregarCarrinho() async {
     setState(() => carregando = true);
 
     final data = await api.listarCarrinho(widget.idUsuario);
-
-    print("🔥 ITENS DO CARRINHO:");
-    print(data);
 
     setState(() {
       itens = data;
@@ -41,20 +39,26 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
     });
   }
 
+  // ================= REMOVER =================
   Future<void> _removerItem(int id) async {
-    print("🗑️ Removendo ID: $id");
-
     await api.removerCarrinho(id);
-
     await _carregarCarrinho();
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Item removido")),
-      );
-    }
   }
 
+  // ================= ALTERAR QUANTIDADE =================
+  Future<void> _alterarQuantidade(int id, int qtdAtual, int delta) async {
+    final novaQtd = qtdAtual + delta;
+
+    if (novaQtd <= 0) {
+      await _removerItem(id);
+      return;
+    }
+
+    await api.atualizarQuantidade(id, novaQtd);
+    await _carregarCarrinho();
+  }
+
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,33 +93,80 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                     final String nome =
                         item['name']?.toString() ?? 'Sem nome';
 
-                    final String preco =
-                        item['price']?.toString() ?? '0.00';
+                    final double preco =
+                        double.tryParse(item['price'].toString()) ?? 0;
 
-                    final String quantidade =
-                        item['quantity']?.toString() ?? '0';
+                    final int quantidade =
+                        int.tryParse(item['quantity'].toString()) ?? 0;
 
                     return Container(
                       margin: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: cardColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: ListTile(
-                        title: Text(
-                          nome,
-                          style: TextStyle(color: textColor),
-                        ),
-                        subtitle: Text(
-                          "R\$ $preco x $quantidade",
-                          style: TextStyle(color: textColor),
-                        ),
-                        trailing: IconButton(
-                          icon: Icon(Icons.delete, color: primaryColor),
-                          onPressed: id == 0
-                              ? null
-                              : () => _removerItem(id),
-                        ),
+                      child: Row(
+                        children: [
+                          // INFO
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  nome,
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  "R\$ ${preco.toStringAsFixed(2)}",
+                                  style: TextStyle(
+                                    color: primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // CONTROLE DE QUANTIDADE
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.remove,
+                                    color: primaryColor),
+                                onPressed: () =>
+                                    _alterarQuantidade(
+                                        id, quantidade, -1),
+                              ),
+                              Text(
+                                quantidade.toString(),
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.add,
+                                    color: primaryColor),
+                                onPressed: () =>
+                                    _alterarQuantidade(
+                                        id, quantidade, 1),
+                              ),
+                            ],
+                          ),
+
+                          // REMOVER
+                          IconButton(
+                            icon: const Icon(Icons.delete,
+                                color: Colors.red),
+                            onPressed: () => _removerItem(id),
+                          ),
+                        ],
                       ),
                     );
                   },
