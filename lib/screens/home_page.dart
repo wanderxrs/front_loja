@@ -65,6 +65,105 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+void _mostrarExcluirConta() {
+    final TextEditingController senhaController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: cardColor,
+        title: const Text(
+          "Excluir Conta",
+          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Esta ação é irreversível. Para confirmar, digite sua senha atual:",
+              style: TextStyle(color: textColor),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: senhaController,
+              obscureText: true,
+              style: TextStyle(color: textColor),
+              decoration: InputDecoration(
+                labelText: "Senha",
+                labelStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                filled: true,
+                fillColor: backgroundColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: primaryColor.withOpacity(0.5)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancelar", style: TextStyle(color: textColor)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () async {
+              String senhaDigitada = senhaController.text.trim();
+
+              if (senhaDigitada.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("A senha é obrigatória.")),
+                );
+                return;
+              }
+
+              // Captura o mensagem antes de fechar o modal ou mudar de tela
+              final mensagem = ScaffoldMessenger.of(context);
+
+              // 1. Fecha o modal de confirmação
+              Navigator.pop(context);
+
+              // 2. Chama a API (que você já confirmou que funciona e deleta)
+              bool sucesso = await api.deletarConta(widget.idUsuario, senhaDigitada);
+
+              if (sucesso) {
+                // 3. Mostra a mensagem de sucesso usando a referência segura
+                mensagem.showSnackBar(
+                  const SnackBar(
+                    content: Text("Sua conta foi excluída com sucesso."),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+
+                // 4. Força o redirecionamento para a tela de login limpando a pilha
+                if (mounted) {
+                  _logout();
+                }
+              } else {
+                // Se der errado (senha incorreta, por exemplo)
+                mensagem.showSnackBar(
+                  const SnackBar(
+                    content: Text("Erro ao excluir conta, senha incorreta."),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text("Excluir Permanentemente"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,6 +177,12 @@ class _HomePageState extends State<HomePage> {
         elevation: 0,
 
         actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
+            tooltip: "Excluir Conta",
+            onPressed: _mostrarExcluirConta,
+          ),
+
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),
             onPressed: _logout,
