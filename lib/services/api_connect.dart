@@ -198,7 +198,7 @@ class ServicoApi {
   // ================= EDITAR ITEM =================
   Future<bool> editarItem(int idVendedor, Map<String, dynamic> dados) async {
     try {
-      final response = await http.post(
+      final response = await http.put(
         Uri.parse('$baseUrl/editarItem'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
