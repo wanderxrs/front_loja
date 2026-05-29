@@ -97,7 +97,7 @@ class ServicoApi {
   // ================= REDEFINIR SENHA =================
   Future<bool> redefinirSenha(String email, String senha) async {
     try {
-      final response = await http.post(
+      final response = await http.put(
         Uri.parse("$baseUrl/redefinirSenha"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email, "senha": senha}),
@@ -268,6 +268,30 @@ class ServicoApi {
   }
 
   return [];
+  }  
+  
+  //================== Deletar conta =======================
+
+  Future<bool> deletarConta(int idUsuario, String senha) async {
+    try {
+      // O ID do usuário vai direto na URL tipo /deletar_conta/5
+      final response = await http.delete(
+        Uri.parse("$baseUrl/deletar_conta/$idUsuario"),
+        headers: {
+          "Content-Type": "application/json",
+          "X-Senha-Confirmacao": senha
+        },
+      );
+
+      print("DELETAR CONTA STATUS: ${response.statusCode}");
+      print("DELETAR CONTA BODY: ${response.body}");
+
+      // Retorna true apenas se o Flask responder 200 OK
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Erro ao conectar para deletar conta: $e");
+      return false;
+    }
   }
 
 }
