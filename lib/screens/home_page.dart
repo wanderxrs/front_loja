@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/api_connect.dart';
 import 'carrinho_page.dart';
-import 'carrinho_controller.dart';
 import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
   final int idUsuario;
+
   const HomePage({super.key, required this.idUsuario});
 
   @override
@@ -56,7 +56,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // ================= LOGOUT LOCAL =================
   void _logout() {
     Navigator.pushAndRemoveUntil(
       context,
@@ -174,7 +173,6 @@ void _mostrarExcluirConta() {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         centerTitle: true,
-        elevation: 0,
 
         actions: [
           IconButton(
@@ -187,19 +185,18 @@ void _mostrarExcluirConta() {
             icon: const Icon(Icons.logout, color: Colors.red),
             onPressed: _logout,
           ),
-
           IconButton(
             icon: Icon(Icons.shopping_cart, color: primaryColor),
             onPressed: () async {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CarrinhoPage(
-                    idUsuario: widget.idUsuario,
-                  ),
+                  builder: (context) =>
+                      CarrinhoPage(idUsuario: widget.idUsuario),
                 ),
               );
 
+              // 🔥 IMPORTANTE: recarrega depois de voltar
               _carregarDados();
             },
           ),
@@ -350,24 +347,22 @@ void _mostrarExcluirConta() {
 
                 int idProduto = int.parse(prod['id'].toString());
 
-                bool sucesso = await api.comprarItem(
+                // 🔥 AQUI É O CORAÇÃO DO CARRINHO
+                bool sucesso = await api.adicionarCarrinho(
                   widget.idUsuario,
                   idProduto,
                   quantidadeEscolhida,
                 );
 
-                if (sucesso) {
-                  CarrinhoController().adicionarItem(
-                    prod,
-                    quantidadeEscolhida,
-                  );
-                }
+                print("SUCESSO ADD CARRINHO: $sucesso");
 
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        sucesso ? "Adicionado!" : "Erro na compra.",
+                        sucesso
+                            ? "Adicionado ao carrinho!"
+                            : "Erro ao adicionar.",
                       ),
                     ),
                   );

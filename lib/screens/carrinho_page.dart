@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/api_connect.dart';
-import 'carrinho_controller.dart';
 
 class CarrinhoPage extends StatefulWidget {
   final int idUsuario;
@@ -12,7 +11,6 @@ class CarrinhoPage extends StatefulWidget {
 }
 
 class _CarrinhoPageState extends State<CarrinhoPage> {
-  final carrinho = CarrinhoController();
   final api = ServicoApi();
 
   final Color primaryColor = const Color(0xFFFF6A00);
@@ -20,61 +18,40 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
   final Color cardColor = const Color(0xFF1A1A1A);
   final Color textColor = const Color(0xFFF5F5F5);
 
-  Future<void> removerItem(int index) async {
-    final item = carrinho.itens[index];
+  List<dynamic> itens = [];
+  bool carregando = true;
 
-    int quantidade = item['quantidade'];
-
-    bool sucesso = await api.comprarItem(
-      widget.idUsuario,
-      item['id'],
-      -quantidade,
-    );
-
-    if (sucesso) {
-      setState(() {
-        carrinho.removerItem(index);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Item removido e estoque devolvido!")),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Erro ao atualizar banco")),
-      );
-    }
+  @override
+  void initState() {
+    super.initState();
+    _carregarCarrinho();
   }
 
-  void diminuirQuantidade(int index) async {
-    final item = carrinho.itens[index];
+  Future<void> _carregarCarrinho() async {
+    setState(() => carregando = true);
 
-    bool sucesso = await api.comprarItem(
-      widget.idUsuario,
-      item['id'],
-      -1,
-    );
+    final data = await api.listarCarrinho(widget.idUsuario);
 
-    if (sucesso) {
-      setState(() {
-        carrinho.diminuirQuantidade(index);
-      });
-    }
+    print("🔥 ITENS DO CARRINHO:");
+    print(data);
+
+    setState(() {
+      itens = data;
+      carregando = false;
+    });
   }
 
-  void aumentarQuantidade(int index) async {
-    final item = carrinho.itens[index];
+  Future<void> _removerItem(int id) async {
+    print("🗑️ Removendo ID: $id");
 
-    bool sucesso = await api.comprarItem(
-      widget.idUsuario,
-      item['id'],
-      1,
-    );
+    await api.removerCarrinho(id);
 
-    if (sucesso) {
-      setState(() {
-        carrinho.aumentarQuantidade(index);
-      });
+    await _carregarCarrinho();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Item removido")),
+      );
     }
   }
 
@@ -84,93 +61,65 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
       backgroundColor: backgroundColor,
 
       appBar: AppBar(
-        title: const Text("Meu Carrinho"),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        title: const Text("Carrinho"),
+        backgroundColor: backgroundColor,
+        foregroundColor: primaryColor,
         centerTitle: true,
-        elevation: 0,
       ),
 
-      body: carrinho.itens.isEmpty
+      body: carregando
           ? Center(
-              child: Text(
-                "Carrinho vazio",
-                style: TextStyle(color: textColor),
-              ),
+              child: CircularProgressIndicator(color: primaryColor),
             )
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: carrinho.itens.length,
-                    itemBuilder: (context, index) {
-                      final item = carrinho.itens[index];
-
-                      return Container(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          title: Text(
-                            item['nome'],
-                            style: TextStyle(
-                              color: textColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "R\$ ${item['preco']}",
-                                style: TextStyle(color: textColor),
-                              ),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.remove, color: Colors.red),
-                                    onPressed: () => diminuirQuantidade(index),
-                                  ),
-                                  Text(
-                                    "${item['quantidade']}",
-                                    style: TextStyle(color: textColor),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.add, color: Colors.green),
-                                    onPressed: () => aumentarQuantidade(index),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => removerItem(index),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.all(16),
+          : itens.isEmpty
+              ? Center(
                   child: Text(
-                    "Total: R\$ ${carrinho.total.toStringAsFixed(2)}",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: textColor,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    "Carrinho vazio",
+                    style: TextStyle(color: textColor),
                   ),
                 )
-              ],
-            ),
+              : ListView.builder(
+                  itemCount: itens.length,
+                  itemBuilder: (context, index) {
+                    final item = itens[index];
+
+                    final int id =
+                        int.tryParse(item['id'].toString()) ?? 0;
+
+                    final String nome =
+                        item['name']?.toString() ?? 'Sem nome';
+
+                    final String preco =
+                        item['price']?.toString() ?? '0.00';
+
+                    final String quantidade =
+                        item['quantity']?.toString() ?? '0';
+
+                    return Container(
+                      margin: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          nome,
+                          style: TextStyle(color: textColor),
+                        ),
+                        subtitle: Text(
+                          "R\$ $preco x $quantidade",
+                          style: TextStyle(color: textColor),
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: primaryColor),
+                          onPressed: id == 0
+                              ? null
+                              : () => _removerItem(id),
+                        ),
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }
