@@ -235,13 +235,12 @@ class ServicoApi {
     }
   }
 
-  // Adicione isto dentro da classe ServicoApi no seu arquivo api_connect.dart
+  // ================= CATEGORIAS =================
   Future<List<dynamic>> buscarCategorias() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/listarCategorias'));
 
       if (response.statusCode == 200) {
-        // O jsonDecode transforma o JSON do Flask em uma lista do Dart
         return jsonDecode(response.body);
       } else {
         print("Erro na API: ${response.statusCode}");
@@ -252,22 +251,88 @@ class ServicoApi {
       return [];
     }
   }
-  //==================cariinho=======================
+
+  // ================= CARRINHO =================
 
   Future<List<dynamic>> buscarCarrinho() async {
-  try {
-    final response = await http.get(
-      Uri.parse('$baseUrl/listarProdutos'),
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/listarProdutos'),
+      );
 
-    if (response.statusCode == 200) {
-      return jsonDecode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200) {
+        return jsonDecode(utf8.decode(response.bodyBytes));
+      }
+    } catch (e) {
+      print("Erro carrinho: $e");
     }
-  } catch (e) {
-    print("Erro carrinho: $e");
+
+    return [];
   }
 
-  return [];
+  Future<bool> adicionarCarrinho(int userId, int productId, int qtd) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/carrinho/adicionar"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "user_id": userId,
+          "product_id": productId,
+          "quantidade": qtd,
+        }),
+      );
+
+      print("ADD CARRINHO: ${response.body}");
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Erro adicionar carrinho: $e");
+      return false;
+    }
   }
 
+  Future<List<dynamic>> listarCarrinho(int userId) async {
+    try {
+      print("ID ENVIADO: $userId");
+
+      final url = Uri.parse("$baseUrl/carrinho/listar?user_id=$userId");
+      print("URL: $url");
+
+      final response = await http.get(url);
+
+      print("STATUS: ${response.statusCode}");
+      print("BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data is List) {
+          return data;
+        } else {
+          print("ERRO: resposta não é lista");
+          return [];
+        }
+      } else {
+        print("ERRO API: ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      print("ERRO LISTAR CARRINHO: $e");
+      return [];
+    }
+  }
+
+  Future<void> removerCarrinho(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("$baseUrl/carrinho/remover"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"id": id}),
+      );
+
+      print("REMOVER: ${response.body}");
+    } catch (e) {
+      print("Erro remover carrinho: $e");
+    }
+  }
 }
