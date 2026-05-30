@@ -236,12 +236,13 @@ class ServicoApi {
   }
 
   // ================= CATEGORIAS =================
+// ================= CATEGORIAS =================
   Future<List<dynamic>> buscarCategorias() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/listarCategorias'));
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return jsonDecode(utf8.decode(response.bodyBytes));
       } else {
         print("Erro na API: ${response.statusCode}");
         return [];
@@ -361,4 +362,55 @@ class ServicoApi {
       print("Erro remover carrinho: $e");
     }
   }
+
+    // 1. [POST] - Criar Categoria
+  Future<bool> criarCategoria(int idVendedor, String nome) async {
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/criar_categoria/$idVendedor"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"name": nome}),
+      );
+      return res.statusCode == 201 || res.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 2. [GET] - Buscar Categorias
+  Future<List<dynamic>> buscarCategoriasPorVendedor(int idVendedor) async {
+    try {
+      final res = await http.get(Uri.parse("$baseUrl/buscar_categorias/$idVendedor"));
+      return res.statusCode == 200 ? jsonDecode(res.body) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 3. [PUT] - Editar Categoria
+  Future<bool> editarCategoria(int idCategoria, int idVendedor, String novoNome) async {
+    try {
+      final res = await http.put(
+        Uri.parse("$baseUrl/editar_categoria/$idCategoria/$idVendedor"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"name": novoNome}),
+      );
+      return res.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 4. [DELETE] - Deletar Categoria
+  Future<bool> deletarCategoria(int idCategoria, int idVendedor) async {
+    try {
+      final res = await http.delete(
+        Uri.parse("$baseUrl/deletar_categoria/$idCategoria/$idVendedor"),
+      );
+      return res.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
 }

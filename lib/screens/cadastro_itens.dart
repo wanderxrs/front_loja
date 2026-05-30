@@ -32,7 +32,7 @@ class _CadastroItensPageState extends State<CadastroItensPage> {
   }
 
   Future<void> _carregarCategorias() async {
-    final dados = await api.buscarCategorias();
+    final dados = await api.buscarCategoriasPorVendedor(widget.idVendedor);
     setState(() {
       _categorias = dados;
     });
@@ -118,10 +118,14 @@ class _CadastroItensPageState extends State<CadastroItensPage> {
                         labelStyle: TextStyle(color: textColor),
                         border: const OutlineInputBorder(),
                       ),
+                      // === AJUSTADO AQUI ===
                       items: _categorias.map((cat) {
                         return DropdownMenuItem<String>(
                           value: cat['id'].toString(),
-                          child: Text(cat['name'].toString()),
+                          child: Text(
+                            cat['name'].toString() + (cat['user_id'] != null ? " (Minha)" : ""),
+                            style: TextStyle(color: textColor),
+                          ),
                         );
                       }).toList(),
                       onChanged: (value) {

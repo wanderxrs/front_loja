@@ -100,17 +100,13 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
                 return;
               }
 
-              // Captura o mensagem antes de fechar o modal ou mudar de tela
               final mensagem = ScaffoldMessenger.of(context);
 
-              // 1. Fecha o modal de confirmação
               Navigator.pop(context);
 
-              // 2. Chama a API (que você já confirmou que funciona e deleta)
               bool sucesso = await api.deletarConta(widget.idVendedor, senhaDigitada);
 
               if (sucesso) {
-                // 3. Mostra a mensagem de sucesso usando a referência segura
                 mensagem.showSnackBar(
                   const SnackBar(
                     content: Text("Sua conta foi excluída com sucesso."),
@@ -119,12 +115,10 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
                   ),
                 );
 
-                // 4. Força o redirecionamento para a tela de login limpando a pilha
                 if (mounted) {
                   _logout();
                 }
               } else {
-                // Se der errado (senha incorreta, por exemplo)
                 mensagem.showSnackBar(
                   const SnackBar(
                     content: Text("Erro ao excluir conta, senha incorreta."),
@@ -140,33 +134,29 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
     );
   }
 
+  // ================= MÉTODO BUILD RECUPERADO =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-
       appBar: AppBar(
         title: const Text("Meu Painel de Vendas"),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
-
         actions: [
-
           IconButton(
             icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
             tooltip: "Excluir Conta",
             onPressed: _mostrarExcluirConta,
           ),
-
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),
             onPressed: _logout,
           ),
         ],
       ),
-
       floatingActionButton: FloatingActionButton(
         backgroundColor: primaryColor,
         child: const Icon(Icons.add, color: Colors.white),
@@ -180,7 +170,6 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
           _atualizarProdutos();
         },
       ),
-
       body: FutureBuilder<List<dynamic>>(
         future: futureProdutos,
         builder: (context, snapshot) {
@@ -227,12 +216,11 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
                     children: [
                       IconButton(
                         icon: Icon(Icons.edit, color: primaryColor),
-                        onPressed: () => _mostrarDialogoEdicao(prod),
+                        onPressed: () => _edicaoCategoria(prod),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () =>
-                            _confirmarExclusao(prod['id'], prod['name']),
+                        onPressed: () => _confirmarExclusao(prod['id'], prod['name']),
                       ),
                     ],
                   ),
@@ -245,30 +233,28 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
     );
   }
 
-  void _mostrarDialogoEdicao(Map<String, dynamic> prod) async {
-    List<dynamic> categorias = await api.buscarCategorias();
+  // ================= MÉTODOS AUXILIARES COLOCADOS NA ORDEM CORRETA =================
+
+  void _edicaoCategoria(Map<String, dynamic> prod) async {
+    List<dynamic> categorias = await api.buscarCategoriasPorVendedor(widget.idVendedor);
 
     String categoriaSelecionada =
         prod['category_id']?.toString() ??
         (categorias.isNotEmpty ? categorias.first['id'].toString() : '');
 
     final nomeController = TextEditingController(text: prod['name']);
-    final precoController =
-        TextEditingController(text: prod['price'].toString());
-    final estoqueController =
-        TextEditingController(text: prod['stock'].toString());
-    final descController =
-        TextEditingController(text: prod['description']);
+    final precoController = TextEditingController(text: prod['price'].toString());
+    final estoqueController = TextEditingController(text: prod['stock'].toString());
+    final descController = TextEditingController(text: prod['description']);
+
+    if (!mounted) return;
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: cardColor,
-          title: Text(
-            "Editar Produto",
-            style: TextStyle(color: textColor),
-          ),
+          title: Text("Editar Produto", style: TextStyle(color: textColor)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -282,11 +268,10 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
                 _buildField(descController, "Descrição"),
                 const SizedBox(height: 15),
 
+                // DROPDOWN DE SELEÇÃO
                 DropdownButtonFormField<String>(
                   dropdownColor: cardColor,
-                  value: categoriaSelecionada.isNotEmpty
-                      ? categoriaSelecionada
-                      : null,
+                  value: categoriaSelecionada.isNotEmpty ? categoriaSelecionada : null,
                   style: TextStyle(color: textColor),
                   decoration: InputDecoration(
                     labelText: "Categoria",
@@ -296,13 +281,73 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
                     return DropdownMenuItem<String>(
                       value: cat['id'].toString(),
                       child: Text(
-                        cat['name'],
+                        cat['name'] + (cat['user_id'] != null ? " (Minha)" : ""),
                         style: TextStyle(color: textColor),
                       ),
                     );
                   }).toList(),
-                  onChanged: (value) =>
-                      setDialogState(() => categoriaSelecionada = value!),
+                  onChanged: (value) => setDialogState(() => categoriaSelecionada = value!),
+                ),
+                const SizedBox(height: 10),
+
+                // ================= GERENCIADOR COMPACTO (POST, PUT, DELETE) =================
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // 2. [POST] - Criar Categoria
+                    TextButton.icon(
+                      icon: Icon(Icons.add, color: primaryColor),
+                      label: Text("Criar", style: TextStyle(color: primaryColor)),
+                      onPressed: () async {
+                        final textCtrl = TextEditingController();
+                        String? nome = await _promptTexto("Nova Categoria", textCtrl);
+                        if (nome != null && nome.isNotEmpty) {
+                          if (await api.criarCategoria(widget.idVendedor, nome)) {
+                            var atualizadas = await api.buscarCategoriasPorVendedor(widget.idVendedor);
+                            setDialogState(() {
+                              categorias = atualizadas;
+                              categoriaSelecionada = categorias.firstWhere((c) => c['name'] == nome)['id'].toString();
+                            });
+                          }
+                        }
+                      },
+                    ),
+                    // 3. [PUT] - Editar Categoria Selecionada (Apenas se for dele)
+                    TextButton.icon(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      label: const Text("Editar", style: TextStyle(color: Colors.blue)),
+                      onPressed: () async {
+                        final atual = categorias.firstWhere((c) => c['id'].toString() == categoriaSelecionada, orElse: () => null);
+                        if (atual == null || atual['user_id'] == null) return; 
+
+                        final textCtrl = TextEditingController(text: atual['name']);
+                        String? novoNome = await _promptTexto("Editar Nome", textCtrl);
+                        if (novoNome != null && novoNome.isNotEmpty) {
+                          if (await api.editarCategoria(atual['id'], widget.idVendedor, novoNome)) {
+                            var atualizadas = await api.buscarCategoriasPorVendedor(widget.idVendedor);
+                            setDialogState(() => categorias = atualizadas);
+                          }
+                        }
+                      },
+                    ),
+                    // 4. [DELETE] - Deletar Categoria Selecionada (Apenas se for dele)
+                    TextButton.icon(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      label: const Text("Apagar", style: TextStyle(color: Colors.red)),
+                      onPressed: () async {
+                        final atual = categorias.firstWhere((c) => c['id'].toString() == categoriaSelecionada, orElse: () => null);
+                        if (atual == null || atual['user_id'] == null) return; 
+
+                        if (await api.deletarCategoria(atual['id'], widget.idVendedor)) {
+                          var atualizadas = await api.buscarCategoriasPorVendedor(widget.idVendedor);
+                          setDialogState(() {
+                            categorias = atualizadas;
+                            categoriaSelecionada = categorias.isNotEmpty ? categorias.first['id'].toString() : '';
+                          });
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -313,9 +358,7 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
               child: Text("Cancelar", style: TextStyle(color: primaryColor)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
               onPressed: () async {
                 Map<String, dynamic> dadosEditados = {
                   'id': prod['id'],
@@ -326,19 +369,9 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
                   'estoque': estoqueController.text,
                 };
 
-                bool sucesso =
-                    await api.editarItem(widget.idVendedor, dadosEditados);
-
-                if (sucesso && mounted) {
+                if (await api.editarItem(widget.idVendedor, dadosEditados) && mounted) {
                   Navigator.pop(context);
                   _atualizarProdutos();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Produto atualizado!")),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Erro ao editar.")),
-                  );
                 }
               },
               child: const Text("Salvar"),
@@ -349,13 +382,13 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
     );
   }
 
+  // ADICIONADO: Método que estava faltando para o funcionamento do botão de apagar produto
   void _confirmarExclusao(int idProduto, String nome) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: cardColor,
-        title: Text("Excluir Produto?",
-            style: TextStyle(color: textColor)),
+        title: Text("Excluir Produto?", style: TextStyle(color: textColor)),
         content: Text(
           "Deseja realmente apagar o produto '$nome'?",
           style: TextStyle(color: textColor),
@@ -369,19 +402,35 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               Navigator.pop(context);
-              bool sucesso =
-                  await api.excluirItem(widget.idVendedor, idProduto);
+              bool sucesso = await api.excluirItem(widget.idVendedor, idProduto);
 
               if (sucesso) {
                 _atualizarProdutos();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Produto removido!")),
-                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Produto removido!")),
+                  );
+                }
               }
             },
-            child: const Text("Excluir",
-                style: TextStyle(color: Colors.white)),
+            child: const Text("Excluir", style: TextStyle(color: Colors.white)),
           ),
+        ],
+      ),
+    );
+  }
+
+  // Helper simples para abrir a caixinha de texto para Criar/Editar a categoria
+  Future<String?> _promptTexto(String titulo, TextEditingController ctrl) {
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: cardColor,
+        title: Text(titulo, style: TextStyle(color: textColor)),
+        content: TextField(controller: ctrl, style: TextStyle(color: textColor), autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Sair")),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: const Text("OK"))
         ],
       ),
     );

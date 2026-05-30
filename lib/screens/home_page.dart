@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-void _mostrarExcluirConta() {
+  void _mostrarExcluirConta() {
     final TextEditingController senhaController = TextEditingController();
 
     showDialog(
@@ -123,17 +123,13 @@ void _mostrarExcluirConta() {
                 return;
               }
 
-              // Captura o mensagem antes de fechar o modal ou mudar de tela
               final mensagem = ScaffoldMessenger.of(context);
 
-              // 1. Fecha o modal de confirmação
               Navigator.pop(context);
 
-              // 2. Chama a API (que você já confirmou que funciona e deleta)
               bool sucesso = await api.deletarConta(widget.idUsuario, senhaDigitada);
 
               if (sucesso) {
-                // 3. Mostra a mensagem de sucesso usando a referência segura
                 mensagem.showSnackBar(
                   const SnackBar(
                     content: Text("Sua conta foi excluída com sucesso."),
@@ -142,12 +138,10 @@ void _mostrarExcluirConta() {
                   ),
                 );
 
-                // 4. Força o redirecionamento para a tela de login limpando a pilha
                 if (mounted) {
                   _logout();
                 }
               } else {
-                // Se der errado (senha incorreta, por exemplo)
                 mensagem.showSnackBar(
                   const SnackBar(
                     content: Text("Erro ao excluir conta, senha incorreta."),
@@ -196,7 +190,6 @@ void _mostrarExcluirConta() {
                 ),
               );
 
-              // 🔥 IMPORTANTE: recarrega depois de voltar
               _carregarDados();
             },
           ),
@@ -347,7 +340,6 @@ void _mostrarExcluirConta() {
 
                 int idProduto = int.parse(prod['id'].toString());
 
-                // 🔥 AQUI É O CORAÇÃO DO CARRINHO
                 bool sucesso = await api.adicionarCarrinho(
                   widget.idUsuario,
                   idProduto,
@@ -378,3 +370,4 @@ void _mostrarExcluirConta() {
     );
   }
 }
+
