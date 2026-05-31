@@ -235,7 +235,6 @@ class ServicoApi {
     }
   }
 
-  // ================= CATEGORIAS =================
 // ================= CATEGORIAS =================
   Future<List<dynamic>> buscarCategorias() async {
     try {
@@ -363,7 +362,7 @@ class ServicoApi {
     }
   }
 
-    // 1. [POST] - Criar Categoria
+    // Criar Categoria
   Future<bool> criarCategoria(int idVendedor, String nome) async {
     try {
       final res = await http.post(
@@ -377,7 +376,7 @@ class ServicoApi {
     }
   }
 
-  // 2. [GET] - Buscar Categorias
+  // Buscar Categorias
   Future<List<dynamic>> buscarCategoriasPorVendedor(int idVendedor) async {
     try {
       final res = await http.get(Uri.parse("$baseUrl/buscar_categorias/$idVendedor"));
@@ -401,7 +400,7 @@ class ServicoApi {
     }
   }
 
-  // 4. [DELETE] - Deletar Categoria
+  //Deletar Categoria
   Future<bool> deletarCategoria(int idCategoria, int idVendedor) async {
     try {
       final res = await http.delete(
@@ -409,6 +408,34 @@ class ServicoApi {
       );
       return res.statusCode == 200;
     } catch (e) {
+      return false;
+    }
+  }
+
+// ================= VERIFICAR SESSÃO  =================
+  Future<bool> verificarSessao(int idUsuario) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/verificar_sessao/$idUsuario"),
+      );
+      // Se retornar 200 o usuário ta ativo
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Erro verificar sessão: $e");
+      return false;
+    }
+  }
+
+  // ================= LOGOFF =================
+  Future<bool> realizarLogoff() async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/logoff"),
+        headers: {"Content-Type": "application/json"},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Erro logoff: $e");
       return false;
     }
   }

@@ -4,6 +4,7 @@ import 'cadastro_page.dart';
 import 'home_page.dart';
 import 'email_confirmacao.dart';
 import 'vendedor_home_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -33,17 +34,22 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => isLoading = false);
 
-    if (resultado != null && resultado.containsKey('user')) {
+if (resultado != null && resultado.containsKey('user')) {
       final Map<String, dynamic> userData = resultado['user'];
 
       final rawId = userData['id'];
       final rawType = userData['user_type'];
 
-      int idUsuarioLogado =
-          (rawId is int) ? rawId : int.tryParse(rawId.toString()) ?? 0;
+      int idUsuarioLogado = (rawId is int) ? rawId : int.tryParse(rawId.toString()) ?? 0;
+      final String tipoUsuario = rawType != null ? rawType.toString().toLowerCase() : '';
 
-      final String tipoUsuario =
-          rawType != null ? rawType.toString().toLowerCase() : '';
+      //  MANTER DADos DO LOGIN 
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('idUsuario', idUsuarioLogado);
+      await prefs.setString('tipoUsuario', tipoUsuario);
+      // -----------------------------
+
+      if (!mounted) return; // Segurança pra evitar erros depois do await
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login realizado com sucesso!")),
