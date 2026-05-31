@@ -37,11 +37,11 @@ class _LoginPageState extends State<LoginPage> {
 if (resultado != null && resultado.containsKey('user')) {
       final Map<String, dynamic> userData = resultado['user'];
 
-      final rawId = userData['id'];
-      final rawType = userData['user_type'];
+      final id = userData['id'];
+      final tipoUser = userData['user_type'];
 
-      int idUsuarioLogado = (rawId is int) ? rawId : int.tryParse(rawId.toString()) ?? 0;
-      final String tipoUsuario = rawType != null ? rawType.toString().toLowerCase() : '';
+      int idUsuarioLogado = (id is int) ? id : int.tryParse(id.toString()) ?? 0;
+      final String tipoUsuario = tipoUser != null ? tipoUser.toString().toLowerCase() : '';
 
       //  MANTER DADos DO LOGIN 
       final prefs = await SharedPreferences.getInstance();
