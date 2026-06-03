@@ -4,7 +4,6 @@ import 'cadastro_page.dart';
 import 'home_page.dart';
 import 'email_confirmacao.dart';
 import 'vendedor_home_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,6 +17,8 @@ class _LoginPageState extends State<LoginPage> {
   final senhaController = TextEditingController();
   bool isLoading = false;
 
+  final ServicoApi api = ServicoApi();
+
   final Color primaryColor = const Color(0xFFFF6A00);
   final Color backgroundColor = const Color(0xFF0D0D0D);
   final Color cardColor = const Color(0xFF1A1A1A);
@@ -26,7 +27,6 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> fazerLogin() async {
     setState(() => isLoading = true);
 
-    final api = ServicoApi();
     var resultado = await api.login(
       emailController.text,
       senhaController.text,
@@ -42,12 +42,6 @@ if (resultado != null && resultado.containsKey('user')) {
 
       int idUsuarioLogado = (id is int) ? id : int.tryParse(id.toString()) ?? 0;
       final String tipoUsuario = tipoUser != null ? tipoUser.toString().toLowerCase() : '';
-
-      //  MANTER DADos DO LOGIN 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('idUsuario', idUsuarioLogado);
-      await prefs.setString('tipoUsuario', tipoUsuario);
-      // -----------------------------
 
       if (!mounted) return; // Segurança pra evitar erros depois do await
 

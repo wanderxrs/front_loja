@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_connect.dart';
 import 'cadastro_itens.dart';
 import 'login_page.dart';
@@ -49,30 +48,19 @@ class _VendedorHomePageState extends State<VendedorHomePage> {
 
   // ================= LOGOUT =================
   Future<void> _logout() async {
-    // 1. Opcional: Mostrar um loading enquanto desconecta
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+    // Avisa o servidor que está deslogando
+    await api.logout(widget.idVendedor);
+
+    if (!mounted) return;
+
+    // Redireciona o usuário para a tela de login limpando a memória de telas anteriores
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
     );
-
-    // LOGOUT. Chama a API para registrar o logoff no servidor
-    await api.realizarLogoff();
-
-    // Limpa o armazenamento local
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-
-    // Remove o loading e manda para o Login
-    if (mounted) {
-      Navigator.pop(context); // Fecha o loading
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-        (route) => false,
-      );
-    }
   }
+  
 
   void _mostrarExcluirConta() {
     final TextEditingController senhaController = TextEditingController();

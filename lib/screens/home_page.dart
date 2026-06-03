@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/api_connect.dart';
 import 'carrinho_page.dart';
 import 'login_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   final int idUsuario;
@@ -72,30 +71,16 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ================= LOGOUT =================
-  Future<void> _logout() async {
-    // 1. Opcional: Mostrar um loading enquanto desconecta
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+Future<void> _logout() async {
+    await api.logout(widget.idUsuario);
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
     );
-
-    // LOGOUT. Chama a API para registrar o logoff no servidor
-    await api.realizarLogoff();
-
-    // Limpa o armazenamento local
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-
-    // Remove o loading e manda para o Login
-    if (mounted) {
-      Navigator.pop(context); // Fecha o loading
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-        (route) => false,
-      );
-    }
   }
 
   void _mostrarExcluirConta() {
@@ -247,38 +232,40 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              value: _categoriaSelecionada,
-              items: [
-                const DropdownMenuItem(
-                  value: "0",
-                  child: Text("Todas as categorias"),
-                ),
-                ..._categorias.map(
-                  (cat) => DropdownMenuItem(
-                    value: cat['id'].toString(),
-                    child: Text(cat['name']),
-                  ),
-                ),
-              ],
-              onChanged: _filtrarPorCategoria,
-            ),
-          ),
+          value: (_categoriaSelecionada == "0" || _categorias.any((cat) => cat['id'].toString() == _categoriaSelecionada))
+                ? _categoriaSelecionada
+                : "0", 
 
-          Expanded(
-            child: _produtosFiltrados.isEmpty
-                ? Center(
-                    child: Text(
-                      "Nenhum produto encontrado.",
-                      style: TextStyle(color: textColor),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: _produtosFiltrados.length,
-                    itemBuilder: (context, index) {
-                      final prod = _produtosFiltrados[index];
-                      return _buildProdutoCard(prod);
-                    },
-                  ),
+            items: [
+              const DropdownMenuItem(
+                value: "0",
+                child: Text("Todas as categorias"),
+              ),
+              ..._categorias.map(
+                (cat) => DropdownMenuItem(
+                  value: cat['id'].toString(),
+                  child: Text(cat['name']),
+                ),
+              ),
+            ],
+            onChanged: _filtrarPorCategoria,
+          ),
+        ),
+      Expanded(
+        child: _produtosFiltrados.isEmpty
+            ? Center(
+                child: Text(
+                  "Nenhum produto encontrado.",
+                  style: TextStyle(color: textColor),
+                ),
+              )
+            : ListView.builder(
+                itemCount: _produtosFiltrados.length,
+                itemBuilder: (context, index) {
+                  final prod = _produtosFiltrados[index];
+                  return _buildProdutoCard(prod);
+                },
+            ),
           ),
         ],
       ),
