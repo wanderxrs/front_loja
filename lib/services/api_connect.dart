@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ServicoApi {
   final String baseUrl = "http://127.0.0.1:5000";
-
+  
   // ================= LOGIN =================
   Future<Map<String, dynamic>?> login(String email, String senha) async {
     try {
@@ -241,7 +241,7 @@ class ServicoApi {
       final response = await http.get(Uri.parse('$baseUrl/listarCategorias'));
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return jsonDecode(utf8.decode(response.bodyBytes));
       } else {
         print("Erro na API: ${response.statusCode}");
         return [];
@@ -256,9 +256,7 @@ class ServicoApi {
 
   Future<List<dynamic>> buscarCarrinho() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/listarProdutos'),
-      );
+      final response = await http.get(Uri.parse('$baseUrl/listarProdutos'));
 
       if (response.statusCode == 200) {
         return jsonDecode(utf8.decode(response.bodyBytes));
@@ -268,8 +266,8 @@ class ServicoApi {
     }
 
     return [];
-  }  
-  
+  }
+
   //================== Deletar conta =======================
 
   Future<bool> deletarConta(int idUsuario, String senha) async {
@@ -279,7 +277,7 @@ class ServicoApi {
         Uri.parse("$baseUrl/deletar_conta/$idUsuario"),
         headers: {
           "Content-Type": "application/json",
-          "X-Senha-Confirmacao": senha
+          "X-Senha-Confirmacao": senha,
         },
       );
 
@@ -292,8 +290,8 @@ class ServicoApi {
       print("Erro ao conectar para deletar conta: $e");
       return false;
     }
-  }  
-  
+  }
+
   //================== Carrinho =======================
 
   Future<bool> adicionarCarrinho(int userId, int productId, int qtd) async {
@@ -374,4 +372,100 @@ class ServicoApi {
 
   return response.statusCode == 200;
 }
+
+  // Criar Categoria
+  Future<bool> criarCategoria(int idVendedor, String nome) async {
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/criar_categoria/$idVendedor"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"name": nome}),
+      );
+      return res.statusCode == 201 || res.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Buscar Categorias
+  Future<List<dynamic>> buscarCategoriasPorVendedor(int idVendedor) async {
+    try {
+      final res = await http.get(
+        Uri.parse("$baseUrl/buscar_categorias/$idVendedor"),
+      );
+      return res.statusCode == 200 ? jsonDecode(res.body) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 3. [PUT] - Editar Categoria
+  Future<bool> editarCategoria(
+    int idCategoria,
+    int idVendedor,
+    String novoNome,
+  ) async {
+    try {
+      final res = await http.put(
+        Uri.parse("$baseUrl/editar_categoria/$idCategoria/$idVendedor"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"name": novoNome}),
+      );
+      return res.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  //Deletar Categoria
+  Future<bool> deletarCategoria(int idCategoria, int idVendedor) async {
+    try {
+      final res = await http.delete(
+        Uri.parse("$baseUrl/deletar_categoria/$idCategoria/$idVendedor"),
+      );
+      return res.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ================= VERIFICAR SESSÃO =================
+  Future<bool> verificarSessao(int idUsuario) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/verificar_sessao/$idUsuario"),
+      );
+
+      print("VERIFICAR SESSÃO STATUS: ${response.statusCode}");
+      print("VERIFICAR SESSÃO BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data["ativo"] == true;
+      }
+
+      return false; // Retorna false se for 401 ou qualquer outro status
+    } catch (e) {
+      print("Erro verificar sessão: $e");
+      return false;
+    }
+  }
+
+  // ================= LOGOUT =================
+  Future<bool> logout(int idUsuario) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/logout/$idUsuario"),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      print("LOGOUT STATUS: ${response.statusCode}");
+      print("LOGOUT BODY: ${response.body}");
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Erro ao fazer logout: $e");
+      return false;
+    }
+  }
 }

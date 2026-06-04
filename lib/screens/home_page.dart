@@ -28,7 +28,21 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _checarSeguranca();
     _carregarDados();
+  }
+
+  Future<void> _checarSeguranca() async {
+    bool sessaoAtiva = await api.verificarSessao(widget.idUsuario);
+
+    if (!sessaoAtiva && mounted) {
+      // redireciona para o login
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (route) => false,
+      );
+    }
   }
 
   Future<void> _carregarDados() async {
@@ -56,15 +70,20 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _logout() {
+  // ================= LOGOUT =================
+Future<void> _logout() async {
+    await api.logout(widget.idUsuario);
+
+    if (!mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
+      MaterialPageRoute(builder: (_) => const LoginPage()),
       (route) => false,
     );
   }
 
-void _mostrarExcluirConta() {
+  void _mostrarExcluirConta() {
     final TextEditingController senhaController = TextEditingController();
 
     showDialog(
@@ -110,9 +129,7 @@ void _mostrarExcluirConta() {
             child: Text("Cancelar", style: TextStyle(color: textColor)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               String senhaDigitada = senhaController.text.trim();
 
@@ -123,17 +140,16 @@ void _mostrarExcluirConta() {
                 return;
               }
 
-              // Captura o mensagem antes de fechar o modal ou mudar de tela
               final mensagem = ScaffoldMessenger.of(context);
 
-              // 1. Fecha o modal de confirmação
               Navigator.pop(context);
 
-              // 2. Chama a API (que você já confirmou que funciona e deleta)
-              bool sucesso = await api.deletarConta(widget.idUsuario, senhaDigitada);
+              bool sucesso = await api.deletarConta(
+                widget.idUsuario,
+                senhaDigitada,
+              );
 
               if (sucesso) {
-                // 3. Mostra a mensagem de sucesso usando a referência segura
                 mensagem.showSnackBar(
                   const SnackBar(
                     content: Text("Sua conta foi excluída com sucesso."),
@@ -142,12 +158,10 @@ void _mostrarExcluirConta() {
                   ),
                 );
 
-                // 4. Força o redirecionamento para a tela de login limpando a pilha
                 if (mounted) {
                   _logout();
                 }
               } else {
-                // Se der errado (senha incorreta, por exemplo)
                 mensagem.showSnackBar(
                   const SnackBar(
                     content: Text("Erro ao excluir conta, senha incorreta."),
@@ -196,7 +210,6 @@ void _mostrarExcluirConta() {
                 ),
               );
 
-              // 🔥 IMPORTANTE: recarrega depois de voltar
               _carregarDados();
             },
           ),
@@ -219,36 +232,40 @@ void _mostrarExcluirConta() {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              value: _categoriaSelecionada,
-              items: [
-                const DropdownMenuItem(
-                  value: "0",
-                  child: Text("Todas as categorias"),
-                ),
-                ..._categorias.map((cat) => DropdownMenuItem(
-                      value: cat['id'].toString(),
-                      child: Text(cat['name']),
-                    )),
-              ],
-              onChanged: _filtrarPorCategoria,
-            ),
-          ),
+          value: (_categoriaSelecionada == "0" || _categorias.any((cat) => cat['id'].toString() == _categoriaSelecionada))
+                ? _categoriaSelecionada
+                : "0", 
 
-          Expanded(
-            child: _produtosFiltrados.isEmpty
-                ? Center(
-                    child: Text(
-                      "Nenhum produto encontrado.",
-                      style: TextStyle(color: textColor),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: _produtosFiltrados.length,
-                    itemBuilder: (context, index) {
-                      final prod = _produtosFiltrados[index];
-                      return _buildProdutoCard(prod);
-                    },
-                  ),
+            items: [
+              const DropdownMenuItem(
+                value: "0",
+                child: Text("Todas as categorias"),
+              ),
+              ..._categorias.map(
+                (cat) => DropdownMenuItem(
+                  value: cat['id'].toString(),
+                  child: Text(cat['name']),
+                ),
+              ),
+            ],
+            onChanged: _filtrarPorCategoria,
+          ),
+        ),
+      Expanded(
+        child: _produtosFiltrados.isEmpty
+            ? Center(
+                child: Text(
+                  "Nenhum produto encontrado.",
+                  style: TextStyle(color: textColor),
+                ),
+              )
+            : ListView.builder(
+                itemCount: _produtosFiltrados.length,
+                itemBuilder: (context, index) {
+                  final prod = _produtosFiltrados[index];
+                  return _buildProdutoCard(prod);
+                },
+            ),
           ),
         ],
       ),
@@ -270,10 +287,7 @@ void _mostrarExcluirConta() {
       child: ListTile(
         title: Text(
           nome,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,26 +295,114 @@ void _mostrarExcluirConta() {
             Text("R\$ $preco", style: TextStyle(color: textColor)),
             Text(
               "Estoque: $estoque",
-              style: TextStyle(
-                color: estoque > 0 ? Colors.green : Colors.red,
-              ),
+              style: TextStyle(color: estoque > 0 ? Colors.green : Colors.red),
             ),
           ],
         ),
-        trailing: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
+trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Botão Comprar
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              onPressed: estoque > 0 ? () => _mostrarDialogoCompra(prod) : null,
+              child: const Text("Comprar"),
+            ),
+            const SizedBox(width: 8),
+            // Botão Carrinho
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              onPressed: estoque > 0 ? () => _mostrarDialogoCarrinho(prod) : null,
+              child: const Text("Adicionar no carrinho"),
+            ),
+          ],
+        ),
+      )
+    );
+  }
+
+  void _mostrarDialogoCompra(dynamic prod) {
+    int quantidadeEscolhida = 1;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: cardColor,
+          title: Text(
+            "Comprar ${prod['name']} agora?",
+            style: TextStyle(color: textColor),
           ),
-          onPressed: estoque > 0
-              ? () => _mostrarDialogoCompra(prod)
-              : null,
-          child: const Text("Comprar"),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove_circle, color: Colors.red),
+                onPressed: quantidadeEscolhida > 1
+                    ? () => setDialogState(() => quantidadeEscolhida--)
+                    : null,
+              ),
+              Text(
+                "$quantidadeEscolhida",
+                style: TextStyle(fontSize: 20, color: textColor),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle, color: Colors.green),
+                onPressed: quantidadeEscolhida < prod['stock']
+                    ? () => setDialogState(() => quantidadeEscolhida++)
+                    : null,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              onPressed: () async {
+                Navigator.pop(context);
+
+                int idProduto = int.parse(prod['id'].toString());
+
+                // chama a rota na api e faz a operacao
+                bool sucesso = await api.comprarItem(
+                  widget.idUsuario,
+                  idProduto,
+                  quantidadeEscolhida,
+                );
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        sucesso
+                            ? "Compra realizada com sucesso!"
+                            : "Erro ao realizar compra.",
+                      ),
+                      backgroundColor: sucesso ? Colors.green : Colors.red,
+                    ),
+                  );
+                  if (sucesso)
+                    _carregarDados(); // Atualiza a tela para refletir o novo estoque
+                }
+              },
+              child: const Text("Confirmar Compra"),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _mostrarDialogoCompra(dynamic prod) {
+  void _mostrarDialogoCarrinho(dynamic prod) {
     int quantidadeEscolhida = 1;
 
     showDialog(
@@ -339,15 +441,12 @@ void _mostrarExcluirConta() {
               child: Text("Cancelar", style: TextStyle(color: primaryColor)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
               onPressed: () async {
                 Navigator.pop(context);
 
                 int idProduto = int.parse(prod['id'].toString());
 
-                // 🔥 AQUI É O CORAÇÃO DO CARRINHO
                 bool sucesso = await api.adicionarCarrinho(
                   widget.idUsuario,
                   idProduto,

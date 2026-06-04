@@ -17,6 +17,8 @@ class _LoginPageState extends State<LoginPage> {
   final senhaController = TextEditingController();
   bool isLoading = false;
 
+  final ServicoApi api = ServicoApi();
+
   final Color primaryColor = const Color(0xFFFF6A00);
   final Color backgroundColor = const Color(0xFF0D0D0D);
   final Color cardColor = const Color(0xFF1A1A1A);
@@ -25,7 +27,6 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> fazerLogin() async {
     setState(() => isLoading = true);
 
-    final api = ServicoApi();
     var resultado = await api.login(
       emailController.text,
       senhaController.text,
@@ -33,17 +34,16 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => isLoading = false);
 
-    if (resultado != null && resultado.containsKey('user')) {
+if (resultado != null && resultado.containsKey('user')) {
       final Map<String, dynamic> userData = resultado['user'];
 
-      final rawId = userData['id'];
-      final rawType = userData['user_type'];
+      final id = userData['id'];
+      final tipoUser = userData['user_type'];
 
-      int idUsuarioLogado =
-          (rawId is int) ? rawId : int.tryParse(rawId.toString()) ?? 0;
+      int idUsuarioLogado = (id is int) ? id : int.tryParse(id.toString()) ?? 0;
+      final String tipoUsuario = tipoUser != null ? tipoUser.toString().toLowerCase() : '';
 
-      final String tipoUsuario =
-          rawType != null ? rawType.toString().toLowerCase() : '';
+      if (!mounted) return; // Segurança pra evitar erros depois do await
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login realizado com sucesso!")),
