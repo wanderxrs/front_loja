@@ -58,7 +58,6 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
     await _carregarCarrinho();
   }
 
-  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
